@@ -1,0 +1,8 @@
+temp
+env
+.idea
+
+*.session
+*.sqlite
+settings/.*
+*.log
