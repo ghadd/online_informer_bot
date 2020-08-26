@@ -1,6 +1,7 @@
 temp
 env
 .idea
+__pycache__
 
 *.session
 *.sqlite
