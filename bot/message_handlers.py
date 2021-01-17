@@ -1,4 +1,5 @@
 from bot.utils import *
+from database.tracking_user import TrackingUser
 from database.user import *
 
 
@@ -26,31 +27,23 @@ def handle_add_user(bot, msg):
         return
 
     user = User.get(User.user_id == msg.from_user.id)
-    users_tracking_loaded = json.loads(user.users_tracking)
-    users_tracking = [TrackingUser(u) for u in users_tracking_loaded]
 
-    for user_t in users_tracking:
-        if user_t.user_id == entity.id:
-            bot.send_message(
-                msg.from_user.id,
-                'This user is in your tracking list already'
-            )
-            return
+    if list(filter(lambda user_t: user_t.id == entity.id, user.users_tracking)):
+        bot.send_message(
+            msg.from_user.id,
+            'This user is in your tracking list already'
+        )
+        return
 
-    if len(users_tracking) >= 5:
+    if len(user.users_tracking) >= 5:
         bot.send_message(
             msg.from_user.id,
             'Cannot add more than 5 users in free version.'
         )
         return
 
-    users_tracking.append(TrackingUser(json.dumps({
-        "user_id": entity.id,
-        "first_name": entity.first_name,
-        "online": []
-    })))
-
-    update_users_tracking(user, users_tracking)
+    user.users_tracking.append(TrackingUser(entity))
+    update_users_tracking(user)
 
     bot.send_message(
         msg.from_user.id,
@@ -69,22 +62,23 @@ def handle_del_user(bot, msg):
         return
 
     user = User.get(User.user_id == msg.from_user.id)
-    users_tracking_loaded = json.loads(user.users_tracking)
-    users_tracking = [TrackingUser(u) for u in users_tracking_loaded]
 
-    for i in range(len(users_tracking)):
-        if users_tracking[i].user_id == entity.id:
-            del users_tracking[i]
-            break
-
-    update_users_tracking(user, users_tracking)
+    if not list(filter(lambda user_t: user_t.user_id == entity.id, user.users_tracking)):
+        message = 'User <a href="tg://user?id={user_id}">{user_name}</a> is not in your tracking list.'.format(
+            user_id=entity.id,
+            user_name=entity.first_name,
+        )
+    else:
+        user.users_tracking = list(filter(lambda user_t: user_t.user_id != entity.id, user.users_tracking))
+        update_users_tracking(user)
+        message = 'Sure, deleted <a href="tg://user?id={user_id}">{user_name}</a> from tracking.'.format(
+            user_id=entity.id,
+            user_name=entity.first_name,
+        )
 
     bot.send_message(
         msg.from_user.id,
-        'Sure, deleted <a href="tg://user?id={user_id}">{user_name}</a> from tracking.'.format(
-            user_id=entity.id,
-            user_name=entity.first_name,
-        ),
+        message,
         parse_mode='HTML'
     )
 

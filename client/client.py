@@ -7,26 +7,26 @@ from settings.logger import get_logger
 logger = get_logger(__name__)
 
 
-def is_online(username="", user_id=0):
-    with TelegramClient(__file__, API_ID, API_HASH) as client:
-        user = None
+class ClientMonitor:
+    def __init__(self, entity_qualifier):
+        self.entity_qualifier = entity_qualifier
 
-        if username:
+    @staticmethod
+    def get_entity(entity_qualifier):
+        with TelegramClient(__file__, API_ID, API_HASH) as client:
+            return client.get_entity(entity_qualifier)
+
+    def is_online(self):
+        with TelegramClient(__file__, API_ID, API_HASH) as client:
+            user = None
+
+            if not self.entity_qualifier:
+                raise ValueError("No entity qualifier provided.")
+
             try:
-                user = client.get_entity(username)
+                user = client.get_entity(self.entity_qualifier)
             except ValueError:
-                logger.error(f'User with username `{username}` cannot be found.')
-        else:
-            try:
-                user = client.get_entity(user_id)
-            except ValueError:
-                logger.error(f'User with id `{user_id}` cannot be found.')
+                logger.error(f'User with entity qualifier `{self.entity_qualifier}` cannot be found.')
 
-        if user:
-            return isinstance(user.status, UserStatusOnline)
-
-
-def get_entity(entity_id):
-    with TelegramClient(__file__, API_ID, API_HASH) as client:
-        entity = client.get_entity(entity_id)
-        return entity
+            if user:
+                return isinstance(user.status, UserStatusOnline)

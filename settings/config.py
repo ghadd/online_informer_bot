@@ -5,11 +5,11 @@ HOUR = 60 * 60
 MINUTE = 60
 
 # consider creating those files
-API_ID = int(open('./settings/.api_id', 'r').read())
-API_HASH = open('./settings/.api_hash', 'r').read()
-BOT_TOKEN = open('./settings/.bot_token', 'r').read()
+API_ID = os.environ["TG_API_ID"]
+API_HASH = os.environ["TG_API_HASH"]
+BOT_TOKEN = os.environ["ONLINE_INFORMER_BOT_TOKEN"]
 
-DEFAULT_TIMEOUT = MINUTE / 2
+DEFAULT_TIMEOUT = MINUTE / 10
 DEFAULT_NOTIFY_TIMEOUT = DAY
 MIN_NOTIFICATION_TIMEOUT = HOUR / 2
 
@@ -21,4 +21,4 @@ FILL = False
 BORDER_COLOR = 'green'
 BG_COLOR = 'white'
 
-CHART_BLANK = './temp/{}-{}.png'
+CHART_BLANK = '~/.cache/{}-{}.png'

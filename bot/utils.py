@@ -1,10 +1,13 @@
-from datetime import datetime, timedelta
+import json
+from datetime import timedelta
 
 import requests
 import telethon
+from telebot.apihelper import ApiTelegramException
 
 from bot import chart
-from client import client
+from client import ClientMonitor
+from database.tracking_user import TrackingUser
 from database.user import *
 from settings.config import *
 from settings.logger import *
@@ -12,10 +15,10 @@ from settings.logger import *
 logger = get_logger(__name__)
 
 
-def update_users_tracking(user, users_tracking):
+def update_users_tracking(user):
     User.update(
         {
-            User.users_tracking: json.dumps([u.json() for u in users_tracking])
+            User.users_tracking: user.users_tracking
         }
     ).where(
         User.user_id == user.user_id
@@ -26,19 +29,17 @@ def get_track_info(user, simplified=False, certain_record=None):
     logger.info(f'Gathering track info for {user.first_name}({user.user_id}).')
 
     info = ''
-    users_tracking_loaded = json.loads(user.users_tracking)
-    users_tracking = [TrackingUser(u) for u in users_tracking_loaded]
 
     if certain_record:
         logger.info(f'Info for {user.first_name}({user.user_id}) is being gathered about {certain_record.first_name}'
                     f'({certain_record.id}).')
-        users_tracking = filter(lambda x: x.user_id == certain_record.id, users_tracking)
+        users_tracking = filter(lambda x: x.user_id == certain_record.id, user.users_tracking)
 
     if simplified:
         logger.info(f'Info for {user.first_name}({user.user_id}) is simplified => first name only.')
-        return ', '.join([u.first_name for u in users_tracking])
+        return ', '.join([u.first_name for u in user.users_tracking])
 
-    for user_t in users_tracking:
+    for user_t in user.users_tracking:
         n_records = int(user.notification_timeout / DEFAULT_TIMEOUT)
         records = user_t.online_timeline[-n_records:]
         online = records.count(True) * DEFAULT_TIMEOUT
@@ -88,18 +89,24 @@ def send_photo_chart(bot, user, certain_record):
 
 def notify_user(bot, user, certain_record=None):
     logger.info(f'Performing notification for {user.first_name}({user.user_id}).')
-    bot.send_message(
-        user.user_id,
-        get_track_info(user, certain_record=certain_record),
-        parse_mode='Markdown'
-    )
-
+    try:
+        bot.send_message(
+            user.user_id,
+            get_track_info(user, certain_record=certain_record),
+            parse_mode='Markdown'
+        )
+    except ApiTelegramException:
+        bot.send_message(
+            user.user_id,
+            "You track no users."
+        )
+        
     if certain_record:
         send_photo_chart(bot, user, certain_record)
 
     User.update(
         {
-            User.last_notified: time.time()
+            User.last_notified: datetime.now().strftime('%Y-%m-%d %H:%M:%S')
         }
     ).where(
         User.user_id == user.user_id
@@ -107,14 +114,15 @@ def notify_user(bot, user, certain_record=None):
 
 
 def get_working_entity(bot, msg):
-    to_del = " ".join(msg.text.split()[1:])
-    entity = client.get_entity(to_del)
+    entity_qualifier = " ".join(msg.text.split()[1:])
+
+    entity = ClientMonitor.get_entity(entity_qualifier)
     if not isinstance(entity, telethon.types.User):
         bot.send_message(
             msg.from_user.id,
             'Cannot find this user.'
         )
-        raise ValueError(f'Got non-user entity `{to_del}`')
+        raise ValueError(f'Got non-user entity `{entity_qualifier}`')
     return entity
 
 
@@ -174,4 +182,4 @@ def get_labeled_time(timeout):
     if m:
         return smart_join(', ', [f'{m} minute{"s" if m > 1 else ""}', get_labeled_time(timeout - m * MINUTE)])
 
-    return f'{timeout} second{"s" if d > 1 else ""}' if timeout else ''
+    return f'{timeout} second{"s" if d > 1 else ""}' if timeout else 'none'

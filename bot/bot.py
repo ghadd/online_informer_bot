@@ -1,14 +1,14 @@
+from .message_handlers import *
+
+from client import *
+from database import *
+from settings import *
+
 import asyncio
-
 import telebot
-from telethon.errors import TypeNotFoundError
+import time
 
-from bot.message_handlers import *
-from bot.utils import *
-from client import client
-from database.user import *
-from settings.config import *
-from settings.logger import get_logger
+from telethon.errors import TypeNotFoundError
 
 logger = get_logger(__name__)
 bot = telebot.TeleBot(BOT_TOKEN, threaded=False)
@@ -52,18 +52,18 @@ def updater():
             # checking users
             users = User.select()
             for user in users:
-                users_tracking_loaded = json.loads(user.users_tracking)
-                users_tracking = [TrackingUser(u) for u in users_tracking_loaded]
+                users_tracking = user.users_tracking
 
-                for i in range(len(users_tracking)):
-                    status = client.is_online(users_tracking[i].user_id)
-                    users_tracking[i].online_timeline.append(status)
+                for user_tracking in users_tracking:
+                    cl = ClientMonitor(user_tracking.id)
+                    status = cl.is_online()
+                    user_tracking.online_timeline.append(status)
 
-                update_users_tracking(user, users_tracking)
+                update_users_tracking(user)
 
             # notifying users
             for user in users:
-                if time.time() - user.last_notified > user.notification_timeout:
+                if (datetime.now() - user.last_notified).total_seconds() > user.notification_timeout:
                     notify_user(bot, user)
 
             time.sleep(DEFAULT_TIMEOUT)
