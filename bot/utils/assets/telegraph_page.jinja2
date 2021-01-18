@@ -1,0 +1,4 @@
+{% for user_t in user_w.users_tracking %}
+    <h3>{{ user_t.first_name }} <i>(id:{{ user_t.user_id }})</i></h3>
+    <img src="{{ get_image_url(user_w, user_t) }}" alt="Doughnut chart">
+{% endfor %}
