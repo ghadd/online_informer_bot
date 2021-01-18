@@ -16,7 +16,8 @@ def handle_start(bot, msg):
     else:
         User.insert(
             user_id=msg.from_user.id,
-            first_name=msg.from_user.first_name
+            first_name=msg.from_user.first_name,
+            username=msg.from_user.username
         ).execute()
         message = "Hey! Welcome, use bla bla bla?"
 

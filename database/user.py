@@ -20,6 +20,7 @@ class State:
 class User(Model):
     user_id = IntegerField()
     first_name = CharField()
+    username = CharField(null=True)
     state = IntegerField(default=State.NORMAL)
     premium = BooleanField(default=False)
 

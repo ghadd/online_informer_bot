@@ -13,6 +13,6 @@ def TRACKED_USERS(tg_user):
         raise ValueError
 
     for user_t in user_w.users_tracking:
-        markup.add(user_t.first_name)
-
+        markup.add(user_t.username if user_t.username else str(user_t.user_id))
+    
     return markup

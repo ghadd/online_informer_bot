@@ -36,7 +36,7 @@ def get_track_info(user, certain_record=None):
         total = len(records) * DEFAULT_TIMEOUT  # in secs
 
         online_status = f'was online for {get_labeled_time(online)}' if online else 'was not online'
-        info += f'{user_t.first_name} in last {get_labeled_time(total)} {online_status}\n'
+        info += f'{user_t.first_name} in last {get_labeled_time(total)} {online_status}\n\n'
 
     return f'`{info}`'
 
@@ -159,21 +159,21 @@ def smart_join(sep, elements):
 
 
 def get_labeled_time(timeout):
-    d = timeout // DAY
-    h = (timeout - d * DAY) // HOUR
-    m = (timeout - d * DAY - h * HOUR) // MINUTE
-    s = (timeout - d * DAY - h * HOUR - m * MINUTE)
+    d = int(timeout // DAY)
+    h = int(timeout // HOUR)
+    m = int(timeout // MINUTE)
+    s = int(timeout)
 
     if d:
-        return smart_join(', ', [f'{d} day{"s" if d > 1 else ""}', get_labeled_time(timeout - d * DAY)])
+        return smart_join(' ', [f'{d} day{"s" if d > 1 else ""}', get_labeled_time(timeout - d * DAY)])
 
     if h:
-        return smart_join(', ', [f'{h} hour{"s" if h > 1 else ""}', get_labeled_time(timeout - h * HOUR)])
+        return smart_join(' ', [f'{h} hour{"s" if h > 1 else ""}', get_labeled_time(timeout - h * HOUR)])
 
     if m:
-        return smart_join(', ', [f'{m} minute{"s" if m > 1 else ""}', get_labeled_time(timeout - m * MINUTE)])
+        return smart_join(' ', [f'{m} minute{"s" if m > 1 else ""}', get_labeled_time(timeout - m * MINUTE)])
 
-    return f'{timeout} second{"s" if s > 1 else ""}' if timeout else ''
+    return f'{s} second{"s" if s > 1 else ""}' if s else ''
 
 
 def validate_timeout(timeout_string):
