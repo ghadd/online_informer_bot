@@ -1,33 +1,27 @@
-import json
+import re
 from datetime import timedelta
 
 import requests
 import telethon
 from telebot.apihelper import ApiTelegramException
 
-from bot import chart
 from client import ClientMonitor
-from database.tracking_user import TrackingUser
 from database.user import *
-from settings.config import *
 from settings.logger import *
+from .chart import *
+from .inline_markups import *
+from .keyboard_markups import *
 
 logger = get_logger(__name__)
 
 
-def update_users_tracking(user):
-    User.update(
-        {
-            User.users_tracking: user.users_tracking
-        }
-    ).where(
-        User.user_id == user.user_id
-    ).execute()
-
-
-def get_track_info(user, simplified=False, certain_record=None):
+def get_track_info(user, certain_record=None):
+    if not user.users_tracking:
+        f'{user.first_name}({user.user_id}) has no one to track'
+        return ""
     logger.info(f'Gathering track info for {user.first_name}({user.user_id}).')
 
+    users_tracking = user.users_tracking
     info = ''
 
     if certain_record:
@@ -35,17 +29,14 @@ def get_track_info(user, simplified=False, certain_record=None):
                     f'({certain_record.id}).')
         users_tracking = filter(lambda x: x.user_id == certain_record.id, user.users_tracking)
 
-    if simplified:
-        logger.info(f'Info for {user.first_name}({user.user_id}) is simplified => first name only.')
-        return ', '.join([u.first_name for u in user.users_tracking])
-
-    for user_t in user.users_tracking:
+    for user_t in users_tracking:
         n_records = int(user.notification_timeout / DEFAULT_TIMEOUT)
         records = user_t.online_timeline[-n_records:]
         online = records.count(True) * DEFAULT_TIMEOUT
         total = len(records) * DEFAULT_TIMEOUT  # in secs
 
-        info += f'{user_t.first_name} in last {get_labeled_time(total)} was online for {get_labeled_time(online)}\n'
+        online_status = f'was online for {get_labeled_time(online)}' if online else 'was not online'
+        info += f'{user_t.first_name} in last {get_labeled_time(total)} {online_status}\n\n'
 
     return f'`{info}`'
 
@@ -65,7 +56,7 @@ def send_photo_chart(bot, user, certain_record):
     data = [sum(online_int[i:i + chunk]) * DEFAULT_TIMEOUT / HOUR for i in range(0, len(online_int), chunk)]
     labels = [(datetime.now() - timedelta(hours=i)).strftime('%H:%M:%S') for i in range(len(data))][::-1]
 
-    photo_url = chart.get_image_link(labels, data)
+    photo_url = get_image_link(labels, data)
     response = requests.get(photo_url)
 
     logger.info(f'Downloading chart about {certain_record.first_name}({certain_record.id}) '
@@ -84,42 +75,45 @@ def send_photo_chart(bot, user, certain_record):
 
 
 def notify_user(bot, user, certain_record=None):
-    logger.info(f'Performing notification for {user.first_name}({user.user_id}).')
     try:
         bot.send_message(
             user.user_id,
             get_track_info(user, certain_record=certain_record),
+            reply_markup=REMOVE,
             parse_mode='Markdown'
         )
-    except ApiTelegramException:
-        bot.send_message(
-            user.user_id,
-            "You track no users."
-        )
-        
+    except ApiTelegramException as e:
+        raise e
+
+    logger.info(f'Performing notification for {user.first_name}({user.user_id}) done.')
+
     if certain_record:
         send_photo_chart(bot, user, certain_record)
-
-    User.update(
-        {
-            User.last_notified: datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-        }
-    ).where(
-        User.user_id == user.user_id
-    ).execute()
+    else:
+        user.last_notified = datetime.now()
+        user.save()
 
 
 def get_working_entity(bot, msg):
-    entity_qualifier = " ".join(msg.text.split()[1:])
+    entity_qualifier = msg.text
 
     entity = ClientMonitor.get_entity(entity_qualifier)
     if not isinstance(entity, telethon.types.User):
         bot.send_message(
             msg.from_user.id,
-            'Cannot find this user.'
+            'I was not able to find this user.'
         )
+        User.set_state(msg.from_user, State.NORMAL)
         raise ValueError(f'Got non-user entity `{entity_qualifier}`')
     return entity
+
+
+def CURRENTLY_UNAVAILABLE(bot, user_id):
+    bot.send_message(
+        user_id,
+        "This feature is currently unavailable",
+        reply_markup=menu_markup
+    )
 
 
 def _get_in_secs(timeout):
@@ -165,17 +159,27 @@ def smart_join(sep, elements):
 
 
 def get_labeled_time(timeout):
-    d = timeout // (3600 * 24)
-    h = timeout // 3600
-    m = timeout // 60
+    d = int(timeout // DAY)
+    h = int(timeout // HOUR)
+    m = int(timeout // MINUTE)
+    s = int(timeout)
 
     if d:
-        return smart_join(', ', [f'{d} day{"s" if d > 1 else ""}', get_labeled_time(timeout - d * DAY)])
+        return smart_join(' ', [f'{d} day{"s" if d > 1 else ""}', get_labeled_time(timeout - d * DAY)])
 
     if h:
-        return smart_join(', ', [f'{h} hour{"s" if h > 1 else ""}', get_labeled_time(timeout - h * HOUR)])
+        return smart_join(' ', [f'{h} hour{"s" if h > 1 else ""}', get_labeled_time(timeout - h * HOUR)])
 
     if m:
-        return smart_join(', ', [f'{m} minute{"s" if m > 1 else ""}', get_labeled_time(timeout - m * MINUTE)])
+        return smart_join(' ', [f'{m} minute{"s" if m > 1 else ""}', get_labeled_time(timeout - m * MINUTE)])
 
-    return f'{timeout} second{"s" if d > 1 else ""}' if timeout else 'none'
+    return f'{s} second{"s" if s > 1 else ""}' if s else ''
+
+
+def validate_timeout(timeout_string):
+    regex_string = r"(\d+[dhms] *)*"
+    regex = re.compile(regex_string)
+
+    match = regex.match(timeout_string)
+    if not match.span()[1] == len(timeout_string):
+        raise ValueError("Invalid timeout string format")

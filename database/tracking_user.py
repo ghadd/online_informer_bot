@@ -7,9 +7,11 @@ class TrackingUser:
         if entity:
             self.user_id = entity.id
             self.first_name = entity.first_name
+            self.username = entity.username
         else:
             self.user_id = 0
             self.first_name = 'none'
+            self.username = None
         self.online_timeline = []
 
     @staticmethod
@@ -18,13 +20,12 @@ class TrackingUser:
 
         user.user_id = de_dict['user_id']
         user.first_name = de_dict['first_name']
+        user.username = de_dict['username']
         user.online_timeline = de_dict['online']
         return user
 
     @staticmethod
     def from_json(de_json):
-        user = TrackingUser()
-
         try:
             obj = json.loads(de_json)
             user = TrackingUser.from_dict(obj)
@@ -37,6 +38,7 @@ class TrackingUser:
         return {
             "user_id": self.user_id,
             "first_name": self.first_name,
+            "username": self.username,
             "online": self.online_timeline
         }
 

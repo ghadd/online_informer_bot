@@ -1,14 +1,11 @@
-from .message_handlers import *
-
-from client import *
-from database import *
-from settings import *
-
 import asyncio
-import telebot
 import time
 
+import telebot
 from telethon.errors import TypeNotFoundError
+
+from .keyboard_markups import TRACKED_USERS
+from .message_handlers import *
 
 logger = get_logger(__name__)
 bot = telebot.TeleBot(BOT_TOKEN, threaded=False)
@@ -19,29 +16,76 @@ def start(msg):
     handle_start(bot, msg)
 
 
-@bot.message_handler(commands=['add_user'])
+@bot.callback_query_handler(lambda q: q.data == "add_user")
+def prompt_add_user(q):
+    handle_prompt_user(bot, q,
+                       "Now, send me any identifier for your user. "
+                       "It could be UserID or username of user to add to your tracking list.",
+                       State.ENTITY_INPUT_ADD)
+
+
+@bot.message_handler(func=lambda msg: User.get_state(msg.from_user) == State.ENTITY_INPUT_ADD)
 def add_user(msg):
     handle_add_user(bot, msg)
 
 
-@bot.message_handler(commands=['del_user'])
+@bot.callback_query_handler(lambda q: q.data == "del_user")
+def prompt_del_user(q):
+    handle_prompt_user(bot, q,
+                       "Now, send me any identifier for your user. "
+                       "It could be UserID or username of user to delete from your tracking list.",
+                       State.ENTITY_INPUT_DEL)
+
+
+@bot.message_handler(func=lambda msg: User.get_state(msg.from_user) == State.ENTITY_INPUT_DEL)
 def del_user(msg):
     handle_del_user(bot, msg)
 
 
-@bot.message_handler(commands=['get_info'])
-def get_info(msg):
-    handle_get_info(bot, msg)
+@bot.callback_query_handler(lambda q: q.data == "settings")
+def open_settings(q):
+    handle_open_settings(bot, q)
 
 
-@bot.message_handler(commands=['set_timeout'])
+@bot.callback_query_handler(lambda q: q.data == "update")
+def update_info(q):
+    handle_update_info(bot, q)
+
+
+@bot.callback_query_handler(lambda q: q.data == "update_certain")
+def prompt_update_certain_info(q):
+    try:
+        tracking_users_markup = TRACKED_USERS(q.from_user)
+    except ValueError as e:
+        NO_TRACKING_USERS(bot, q)
+        return
+
+    handle_prompt_user(bot, q, "Select a user to see data of.", State.ENTITY_INPUT_CHK, tracking_users_markup)
+
+
+@bot.message_handler(func=lambda msg: User.get_state(msg.from_user) == State.ENTITY_INPUT_CHK)
+def update_certain_info(msg):
+    handle_update_certain_info(bot, msg)
+
+
+@bot.callback_query_handler(lambda q: q.data == "set_timeout")
+def prompt_set_timeout(q):
+    handle_prompt_user(bot, q, "Enter new timeout.", State.DATETIME_INPUT)
+
+
+@bot.message_handler(func=lambda msg: User.get_state(msg.from_user) == State.DATETIME_INPUT)
 def set_timeout(msg):
     handle_set_timeout(bot, msg)
 
 
-@bot.message_handler(commands=['get_me'])
-def get_me(msg):
-    handle_get_me(bot, msg)
+@bot.callback_query_handler(lambda q: q.data == "go_premium")
+def go_premium(q):
+    CURRENTLY_UNAVAILABLE(bot, q)
+
+
+@bot.callback_query_handler(lambda q: q.data == "go_back")
+def go_back(q):
+    handle_go_back(bot, q)
 
 
 def updater():
@@ -59,14 +103,16 @@ def updater():
                     status = cl.is_online()
                     user_tracking.online_timeline.append(status)
 
-                update_users_tracking(user_w)
+                user_w.save()
 
             # notifying users
             for user_w in users:
                 if (datetime.now() - user_w.last_notified).total_seconds() > user_w.notification_timeout:
-                    notify_user(bot, user_w)
+                    try:
+                        notify_user(bot, user_w)
+                    except ApiTelegramException as e:
+                        pass
 
             time.sleep(DEFAULT_TIMEOUT)
     except TypeNotFoundError:
         pass
-

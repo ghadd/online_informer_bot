@@ -1,49 +1,77 @@
-from bot.utils import *
-from database.tracking_user import TrackingUser
-from database.user import *
+from .keyboard_markups import REMOVE
+from .utils import *
+
+
+def send_menu(bot, msg):
+    bot.send_message(
+        msg.from_user.id,
+        "Menu:",
+        reply_markup=menu_markup
+    )
 
 
 def handle_start(bot, msg):
     if User.get_or_none(User.user_id == msg.from_user.id):
-        bot.send_message(
-            msg.from_user.id,
-            "Hey! How'ya doing?"
-        )
+        message = "Hey! How'ya doing?"
     else:
         User.insert(
             user_id=msg.from_user.id,
-            first_name=msg.from_user.first_name
+            first_name=msg.from_user.first_name,
+            username=msg.from_user.username
         ).execute()
-        bot.send_message(
-            msg.from_user.id,
-            "Hey! Welcome, use bla bla bla?"
-        )
+        message = "Hey! Welcome, use bla bla bla?"
+
+    bot.send_message(
+        msg.from_user.id,
+        message,
+        reply_markup=menu_markup
+    )
+    User.update_state(msg.from_user, State.NORMAL)
+
+
+def handle_prompt_user(bot, q, contents, new_state, reply_markup=None):
+    bot.send_message(
+        q.from_user.id,
+        contents,
+        reply_markup=reply_markup
+    )
+
+    bot.delete_message(
+        q.from_user.id,
+        q.message.message_id
+    )
+
+    User.update_state(q.from_user, new_state)
 
 
 def handle_add_user(bot, msg):
     try:
         entity = get_working_entity(bot, msg)
-    except ValueError:
+    except ValueError as e:
+        bot.send_message(
+            msg.from_user.id,
+            "Sorry, I was not able to find this user."
+        )
+        logger.info(e)
         return
 
-    user = User.get(User.user_id == msg.from_user.id)
-
-    if list(filter(lambda user_t: user_t.id == entity.id, user.users_tracking)):
+    user_w = User.get_or_none(User.user_id == msg.from_user.id)
+    if list(filter(lambda user_t: user_t.user_id == entity.id, user_w.users_tracking)):
         bot.send_message(
             msg.from_user.id,
             'This user is in your tracking list already'
         )
         return
 
-    if len(user.users_tracking) >= 5:
+    if len(user_w.users_tracking) >= 5:
         bot.send_message(
             msg.from_user.id,
             'Cannot add more than 5 users in free version.'
         )
         return
 
-    user.users_tracking.append(TrackingUser(entity))
-    update_users_tracking(user)
+    user_w.users_tracking.append(TrackingUser(entity))
+    user_w.save()
 
     bot.send_message(
         msg.from_user.id,
@@ -54,23 +82,31 @@ def handle_add_user(bot, msg):
         parse_mode='HTML'
     )
 
+    User.update_state(msg.from_user, State.NORMAL)
+    send_menu(bot, msg)
+
 
 def handle_del_user(bot, msg):
     try:
         entity = get_working_entity(bot, msg)
-    except ValueError:
+    except ValueError as e:
+        logger.info(e)
+        bot.send_message(
+            msg.from_user.id,
+            "Sorry, I was not able to find this user."
+        )
         return
 
-    user = User.get(User.user_id == msg.from_user.id)
+    user_w = User.get(User.user_id == msg.from_user.id)
 
-    if not list(filter(lambda user_t: user_t.user_id == entity.id, user.users_tracking)):
+    if not list(filter(lambda user_t: user_t.user_id == entity.id, user_w.users_tracking)):
         message = 'User <a href="tg://user?id={user_id}">{user_name}</a> is not in your tracking list.'.format(
             user_id=entity.id,
             user_name=entity.first_name,
         )
     else:
-        user.users_tracking = list(filter(lambda user_t: user_t.user_id != entity.id, user.users_tracking))
-        update_users_tracking(user)
+        user_w.users_tracking = list(filter(lambda user_t: user_t.user_id != entity.id, user_w.users_tracking))
+        user_w.save()
         message = 'Sure, deleted <a href="tg://user?id={user_id}">{user_name}</a> from tracking.'.format(
             user_id=entity.id,
             user_name=entity.first_name,
@@ -82,65 +118,107 @@ def handle_del_user(bot, msg):
         parse_mode='HTML'
     )
 
+    User.update_state(msg.from_user, State.NORMAL)
+    send_menu(bot, msg)
 
-def handle_get_info(bot, msg):
+
+def handle_open_settings(bot, q):
+    user_w = User.get(User.user_id == q.from_user.id)
+    current_settings = "Current settings:\n" \
+                       "Notification timeout: {timeout}\n" \
+                       "Premium membership: {premium}" \
+        .format(
+            timeout=get_labeled_time(user_w.notification_timeout),
+            premium="true" if user_w.premium else "false"
+        )
+
+    bot.edit_message_text(
+        current_settings,
+        q.from_user.id,
+        q.message.message_id,
+        reply_markup=settings_markup
+    )
+    bot.answer_callback_query(q.id)
+
+
+def handle_update_info(bot, q):
+    user = User.get(User.user_id == q.from_user.id)
+    try:
+        notify_user(bot, user)
+    except ApiTelegramException as e:
+        bot.send_message(
+            q.from_user.id,
+            "You have no users tracking yet :("
+        )
+
+    bot.delete_message(
+        q.from_user.id,
+        q.message.message_id,
+    )
+    send_menu(bot, q)
+
+
+def handle_update_certain_info(bot, msg):
     user = User.get(User.user_id == msg.from_user.id)
     try:
         certain_user = get_working_entity(bot, msg)
         notify_user(bot, user, certain_record=certain_user)
-    except ValueError:
-        notify_user(bot, user)
+        User.update_state(msg.from_user, State.NORMAL)
+        send_menu(bot, msg)
+    except ValueError as e:
+        bot.send_message(
+            msg.from_user.id,
+            "Please, choose an option from the keyboard, i suggested."
+        )
+        logger.info(e)
 
 
 def handle_set_timeout(bot, msg):
+    timeout = msg.text
     try:
-        timeout = " ".join(msg.text.split()[1:])
-    except IndexError:
+        validate_timeout(timeout)
+    except ValueError:
         bot.send_message(
             msg.from_user.id,
-            "Use this as ..."
+            "Invalid format of timeout"
         )
         return
 
     timeout_in_seconds = get_in_secs(timeout)
-    if timeout_in_seconds:
-        if timeout_in_seconds < MIN_NOTIFICATION_TIMEOUT:
-            bot.send_message(
-                msg.from_user.id,
-                f'Cannot set this this timeout. Minimum value is {get_labeled_time(MIN_NOTIFICATION_TIMEOUT)}'
-            )
-            return
+    if timeout_in_seconds < MIN_NOTIFICATION_TIMEOUT:
+        bot.send_message(
+            msg.from_user.id,
+            f'Cannot set this this timeout. Minimum value is {get_labeled_time(MIN_NOTIFICATION_TIMEOUT)}'
+        )
+    else:
         bot.send_message(
             msg.from_user.id,
             f'Setting your timeout to {get_labeled_time(timeout_in_seconds)}.'
         )
-        User.update(
-            {
-                User.notification_timeout: timeout_in_seconds
-            }
-        ).where(
-            User.user_id == msg.from_user.id
-        ).execute()
-    else:
-        bot.send_message(
-            msg.from_user.id,
-            'Cannot set value to zero.'
-        )
+        User.update_timeout(msg.from_user, timeout_in_seconds)
+    
+    send_menu(bot, msg)
+    User.update_state(msg.from_user, State.NORMAL)
 
 
-def handle_get_me(bot, msg):
-    user = User.get(User.user_id == msg.from_user.id)
-
-    message = ''
-
-    tracking_users = get_track_info(user, simplified=True)
-    message += '**Tracking users**: {}\n\n'.format(tracking_users)
-
-    timeout = get_labeled_time(user.notification_timeout)
-    message += '**Notification timeout**: {}\n\n'.format(timeout)
-
-    bot.send_message(
-        msg.from_user.id,
-        message,
-        parse_mode='Markdown'
+def handle_go_back(bot, q):
+    bot.edit_message_text(
+        "Menu:",
+        q.from_user.id,
+        q.message.message_id,
+        reply_markup=menu_markup
     )
+
+    bot.answer_callback_query(q.id)
+
+
+def NO_TRACKING_USERS(bot, q):
+    bot.send_message(
+        q.from_user.id,
+        "You have no users tracking yet :("
+    )
+    bot.delete_message(
+        q.from_user.id,
+        q.message.message_id
+    )
+    send_menu(bot, q)
