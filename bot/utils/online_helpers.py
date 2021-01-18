@@ -1,6 +1,6 @@
-from datetime import datetime
+from datetime import datetime, timedelta
 
-from bot.utils import get_start_of_day
+from .time_helpers import *
 from settings import DEFAULT_TIMEOUT, DAY
 
 
@@ -25,5 +25,10 @@ def get_whole_day_records(user_t):
     max_n_of_day_records = int(DAY // DEFAULT_TIMEOUT)
     records = user_t.online_timeline[-max_n_of_records:]
 
-    records = records + [False for i in range(max_n_of_day_records - len(records))]
+    missing_front = int((datetime.now()
+                         - timedelta(seconds=DEFAULT_TIMEOUT * len(records))
+                         - get_start_of_day()).total_seconds() // DEFAULT_TIMEOUT)
+    missing_back = max_n_of_day_records - missing_front - len(records)
+
+    records = [False] * missing_front + records + [False] * missing_back
     return records
