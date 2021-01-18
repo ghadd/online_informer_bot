@@ -1,5 +1,5 @@
-from .keyboard_markups import REMOVE
 from .utils import *
+from .utils.time_helpers import get_in_secs, validate_timeout
 
 
 def send_menu(bot, msg):
@@ -162,6 +162,16 @@ def handle_update_certain_info(bot, msg):
     user = User.get(User.user_id == msg.from_user.id)
     try:
         certain_user = get_working_entity(bot, msg)
+        certain_user = list(filter(lambda user_t: user_t.user_id == certain_user.id, user.users_tracking))
+        if not certain_user:
+            bot.send_message(
+                msg.from_user.id,
+                "Who the heck is this guy? Please, choose an option from the keyboard, i suggested."
+            )
+            return
+        else:
+            certain_user = certain_user[0]
+
         notify_user(bot, user, certain_record=certain_user)
         User.update_state(msg.from_user, State.NORMAL)
         send_menu(bot, msg)

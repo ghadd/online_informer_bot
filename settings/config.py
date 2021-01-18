@@ -15,10 +15,5 @@ MIN_NOTIFICATION_TIMEOUT = HOUR / 2
 
 DATABASE_PATH = os.path.abspath('./database/db.sqlite')
 
-CHART_API_POINT = 'https://quickchart.io/chart?'
-TYPE = 'line'
-FILL = False
-BORDER_COLOR = 'green'
-BG_COLOR = 'white'
-
-CHART_BLANK = '~/.cache/{}-{}.png'
+DATETIME_FORMAT = '%Y-%m-%d %H:%M:%S'
+TIME_FORMAT = '%H:%M:%S'

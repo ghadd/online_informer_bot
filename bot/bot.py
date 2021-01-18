@@ -4,8 +4,8 @@ import time
 import telebot
 from telethon.errors import TypeNotFoundError
 
-from .keyboard_markups import TRACKED_USERS
 from .message_handlers import *
+from .utils import *
 
 logger = get_logger(__name__)
 bot = telebot.TeleBot(BOT_TOKEN, threaded=False)

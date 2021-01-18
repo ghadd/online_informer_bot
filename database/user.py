@@ -4,7 +4,7 @@ from peewee import *
 from playhouse.sqlite_ext import JSONField
 
 from database.tracking_user import TrackingUser
-from settings.config import DATABASE_PATH, MINUTE
+from settings.config import DATABASE_PATH, MINUTE, DATETIME_FORMAT
 
 db = SqliteDatabase(DATABASE_PATH)
 
@@ -25,7 +25,7 @@ class User(Model):
     premium = BooleanField(default=False)
 
     users_tracking = JSONField(json_dumps=TrackingUser.custom_dumps, json_loads=TrackingUser.custom_loads, default=[])
-    last_notified = DateTimeField(default=datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
+    last_notified = DateTimeField(default=datetime.now().strftime(DATETIME_FORMAT))
     notification_timeout = IntegerField(default=MINUTE / 10)
 
     @staticmethod
