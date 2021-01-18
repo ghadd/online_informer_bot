@@ -1,4 +1,5 @@
 import re
+from datetime import datetime, date
 
 from settings import MINUTE, HOUR, DAY
 
@@ -70,3 +71,8 @@ def validate_timeout(timeout_string):
     match = regex.match(timeout_string)
     if not match.span()[1] == len(timeout_string):
         raise ValueError("Invalid timeout string format")
+
+
+def get_start_of_day():
+    start_of_day = datetime.combine(date.today(), datetime.min.time())
+    return start_of_day

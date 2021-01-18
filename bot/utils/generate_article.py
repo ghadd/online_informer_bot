@@ -1,25 +1,13 @@
 import json
-from datetime import datetime, timedelta, date
+from datetime import timedelta
 
 from jinja2 import Template
 from quickchart import QuickChart
 from telegraph import Telegraph
 
 from settings import *
-from .time_helpers import get_labeled_time
-
-
-def get_online_offline(user_w, user_t, whole_day=False):
-    if whole_day:
-        records = get_whole_day_records(user_t)
-    else:
-        n_records = int(user_w.notification_timeout / DEFAULT_TIMEOUT)
-        records = user_t.online_timeline[-n_records:]
-
-    online = records.count(True) * DEFAULT_TIMEOUT
-    offline = len(records) * DEFAULT_TIMEOUT - online
-
-    return online, offline
+from .time_helpers import *
+from .online_helpers import *
 
 
 def get_doughnut_chart_url(user_w, user_t, whole_day=False):
@@ -51,23 +39,6 @@ def get_radar_chart_url(user_t):
 
     url = qc.get_url()
     return url
-
-
-def get_whole_day_records(user_t):
-    # getting the info for each hour && filling missing with zeros
-    start_of_day = get_start_of_day()
-    time_since_start_of_day = datetime.now() - start_of_day
-    max_n_of_records = int(time_since_start_of_day.total_seconds() / DEFAULT_TIMEOUT)
-    max_n_of_day_records = int(DAY // DEFAULT_TIMEOUT)
-    records = user_t.online_timeline[-max_n_of_records:]
-
-    records = records + [False for i in range(max_n_of_day_records - len(records))]
-    return records
-
-
-def get_start_of_day():
-    start_of_day = datetime.combine(date.today(), datetime.min.time())
-    return start_of_day
 
 
 def generate_article(user_w):
