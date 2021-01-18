@@ -12,5 +12,5 @@ Path('~/.cache').mkdir(parents=True, exist_ok=True)
 User.create_table()
 
 if __name__ == "__main__":
-    # threading.Thread(target=updater).start()
+    threading.Thread(target=updater).start()
     bot.polling(none_stop=True)

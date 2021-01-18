@@ -51,11 +51,7 @@ def get_track_info(user, simplified=False, certain_record=None):
 
 
 def send_photo_chart(bot, user, certain_record):
-    users_tracking_loaded = json.loads(user.users_tracking)
-    users_tracking = [TrackingUser(u) for u in users_tracking_loaded]
-
-    if certain_record:
-        users_tracking = list(filter(lambda x: x.user_id == certain_record.id, users_tracking))
+    users_tracking = list(filter(lambda x: x.user_id == certain_record.id, user.users_tracking))
 
     if users_tracking:
         user_t = users_tracking[0]

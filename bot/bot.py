@@ -51,20 +51,20 @@ def updater():
         while True:
             # checking users
             users = User.select()
-            for user in users:
-                users_tracking = user.users_tracking
+            for user_w in users:
+                users_tracking = user_w.users_tracking
 
                 for user_tracking in users_tracking:
-                    cl = ClientMonitor(user_tracking.id)
+                    cl = ClientMonitor(user_tracking.user_id)
                     status = cl.is_online()
                     user_tracking.online_timeline.append(status)
 
-                update_users_tracking(user)
+                update_users_tracking(user_w)
 
             # notifying users
-            for user in users:
-                if (datetime.now() - user.last_notified).total_seconds() > user.notification_timeout:
-                    notify_user(bot, user)
+            for user_w in users:
+                if (datetime.now() - user_w.last_notified).total_seconds() > user_w.notification_timeout:
+                    notify_user(bot, user_w)
 
             time.sleep(DEFAULT_TIMEOUT)
     except TypeNotFoundError:
