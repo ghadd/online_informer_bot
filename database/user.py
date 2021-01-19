@@ -33,7 +33,7 @@ class User(Model):
     ----------
     user_id : int
         telegram user id
-    first_name : str:
+    first_name : str
         telegram user first name (is Required)
     username : str
         telegram user username (is Optional)

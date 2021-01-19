@@ -3,6 +3,22 @@ from json.decoder import JSONDecodeError
 
 
 class TrackingUser:
+    """
+    This class represents a user, which is being tracked by someone, in general.
+
+    Attributes
+    ----------
+    user_id : int
+        telegram user id
+    first_name : str
+        telegram user first name (is Required)
+    username : str
+        telegram user username (is Optional)
+    online_timeline : List[bool]
+        boolean array representation on user's online status.
+        True means user was online at given point of time.
+        Values are offset with default timeout.
+    """
     def __init__(self, entity=None):
         if entity:
             self.user_id = entity.id
