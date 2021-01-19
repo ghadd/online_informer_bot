@@ -14,9 +14,10 @@ from jinja2 import Template
 from quickchart import QuickChart
 from telegraph import Telegraph
 
-from database import User, TrackingUser
 from settings import *
 from .online_helpers import *
+
+logger = logger.get_logger(__name__)
 
 
 def get_doughnut_chart_url(user_w: User, user_t: TrackingUser, whole_day: bool = False) -> str:
@@ -42,6 +43,11 @@ def get_doughnut_chart_url(user_w: User, user_t: TrackingUser, whole_day: bool =
     str:
         URL for doughnut chart image which can be downloaded or embedded anywhere.
     """
+    logger.info("Generating doughnut chart for {}(id:{}) about {}(id:{}), whole_day={}".format(user_w.first_name,
+                                                                                               user_w.user_id,
+                                                                                               user_t.first_name,
+                                                                                               user_t.user_id,
+                                                                                               whole_day))
     chart_config_template = Template(open("./bot/utils/assets/doughnut_chart_config.jinja2").read())
 
     # [online seconds, offline seconds]
@@ -67,6 +73,7 @@ def get_radar_chart_url(user_t: TrackingUser) -> str:
     -------
     URL for radar chart image which can be downloaded or embedded anywhere.
     """
+    logger.info("Generating radar chart about {}(id:{})".format(user_t.first_name, user_t.user_id))
     chart_config_template = Template(open("./bot/utils/assets/radar_chart_config.jinja2").read())
 
     # creating labels from 00:00:00 to 23:00:00 with 1 hour step

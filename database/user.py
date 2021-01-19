@@ -4,7 +4,7 @@ from peewee import *
 from playhouse.sqlite_ext import JSONField
 
 from database.tracking_user import TrackingUser
-from settings.config import DATABASE_PATH, MINUTE, DATETIME_FORMAT
+from settings.config import DATABASE_PATH, MINUTE, DATETIME_FORMAT, PROPS
 
 # retrieving a database by default path
 db = SqliteDatabase(DATABASE_PATH)
@@ -22,6 +22,13 @@ class State:
     ENTITY_INPUT_DEL = 2
     ENTITY_INPUT_CHK = 3
     DATETIME_INPUT = 4
+
+    @staticmethod
+    def get_value_naming(v):
+        props = PROPS(State)
+        for prop in props:
+            if State().__getattribute__(prop) == v:
+                return prop
 
 
 class User(Model):

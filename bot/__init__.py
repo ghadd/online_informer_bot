@@ -7,3 +7,5 @@ from .message_handlers import *
 from .inline_markups import *
 from .keyboard_markups import *
 from .utils import *
+from .keyboard_markups import *
+from .inline_markups import *

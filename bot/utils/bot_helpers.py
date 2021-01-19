@@ -17,8 +17,8 @@ from telebot.apihelper import ApiTelegramException
 from telebot.types import Message
 from telethon.hints import Entity
 
-from bot.inline_markups import menu_markup
-from bot.keyboard_markups import REMOVE
+from bot.inline_markups import *
+from bot.keyboard_markups import *
 from bot.utils.generate_article import generate_article, generate_personalized_article
 from client import ClientMonitor
 from database import User, TrackingUser
@@ -48,19 +48,22 @@ def get_track_info(user: User, certain_record: Optional[TrackingUser] = None) ->
     # if no users to tracking - return empty response, which throws a Telegram API Exception later on
     # which leads to sending a corresponding message while handling it
     if not user.tracking_users:
-        logger.info(f'{user.first_name}({user.user_id}) has no one to track')
+        logger.warning(f'{user.first_name}({user.user_id}) has no one to track')
         return ""
 
     logger.info(f'Gathering track info for {user.first_name}({user.user_id}).')
     # if certain record (a single tracking user) is provided - generate personalized article
     # template: bot/utils/assets/telegraph_page_personalized.jinja2
     if certain_record:
+        logger.info("Creating a personalized article for {}(id:{}) about {}(id:{})".
+                    format(user.first_name, user.user_id, certain_record.first_name, certain_record.user_id))
         article_link = generate_personalized_article(user, certain_record)
         return "Check {}' info out here: {}".format(certain_record.first_name, article_link)
 
     # otherwise - generate an overview for each tracking user in the same article
     # template: bot/utils/assets/telegraph_page.jinja2
     else:
+        logger.info("Creating a bulk article for {}(id:{})".format(user.first_name, user.user_id))
         article_link = generate_article(user)
         return "Check your query results out here: {}".format(article_link)
 
