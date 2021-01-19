@@ -5,7 +5,7 @@ Restrictions
     * As a real TG account is used as monitor, if user status is ``last seen recently``, henceforth
     that user denied your access to his/her online status.
 """
-from typing import Optional
+from typing import Optional, Union
 
 from telethon.sync import TelegramClient
 from telethon.tl.types import UserStatusOnline
@@ -25,7 +25,7 @@ class ClientMonitor:
     entity_qualifier : Optional[str, int]
         any entity identifier, determining the user entity
     """
-    def __init__(self, entity_qualifier: Optional[str, int]):
+    def __init__(self, entity_qualifier: Union[str, int]):
         self.entity_qualifier = entity_qualifier
 
     @staticmethod

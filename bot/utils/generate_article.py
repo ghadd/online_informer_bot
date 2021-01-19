@@ -113,7 +113,8 @@ def generate_article(user_w: User) -> str:
     URL for generated bulk ``telegra.ph`` article
     """
     telegraph = Telegraph()
-    page_template = Template(open("./bot/utils/assets/telegraph_page.jinja2").read())
+    page_template_contents = open("./bot/utils/assets/telegraph_page.jinja2").read()
+    page_template = Template(page_template_contents)
 
     telegraph.create_account(short_name='Online Informer')
 

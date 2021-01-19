@@ -9,7 +9,7 @@ import threading
 from bot.bot import *
 
 if "CREATE_TABLE" in os.environ:
-    if os.environ["CREATE_TABLE"] == 1:
+    if os.environ["CREATE_TABLE"] == '1':
         User.create_table()
 
 if __name__ == "__main__":

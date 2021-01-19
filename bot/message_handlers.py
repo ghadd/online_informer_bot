@@ -62,7 +62,7 @@ def handle_add_user(bot, msg):
         return
 
     user_w = User.get(User.user_id == msg.from_user.id)
-    if list(filter(lambda user_t: user_t.user_id == entity.id, user_w.users_tracking)):
+    if list(filter(lambda user_t: user_t.user_id == entity.id, user_w.tracking_users)):
         logger.info("User {} has {} in tracking list already".format(
             USER(msg.from_user),
             USER(entity)
@@ -73,7 +73,7 @@ def handle_add_user(bot, msg):
         )
         return
 
-    if len(user_w.users_tracking) >= 5 and not user_w.premium:
+    if len(user_w.tracking_users) >= 5 and not user_w.premium:
         logger.info(
             "User {} without premium membership is attempting to add more than 5 users.".format(USER(msg.from_user)))
         bot.send_message(
@@ -85,7 +85,7 @@ def handle_add_user(bot, msg):
     user_w.tracking_users.append(TrackingUser(entity))
     user_t = TrackingUser(entity)
     logger.info("Adding user {} to {}' tracking list.".format(USER(entity), USER(msg.from_user)))
-    user_w.users_tracking.append(user_t)
+    user_w.tracking_users.append(user_t)
     user_w.save()
 
     bot.send_message(
@@ -115,7 +115,7 @@ def handle_del_user(bot, msg):
 
     user_w = User.get(User.user_id == msg.from_user.id)
 
-    if not list(filter(lambda user_t: user_t.user_id == entity.id, user_w.users_tracking)):
+    if not list(filter(lambda user_t: user_t.user_id == entity.id, user_w.tracking_users)):
         logger.info("User {} is not in tracking list of {}".format(USER(entity), USER(msg.from_user)))
         message = 'User <a href="tg://user?id={user_id}">{user_name}</a> is not in your tracking list.'.format(
             user_id=entity.id,
@@ -123,7 +123,7 @@ def handle_del_user(bot, msg):
         )
     else:
         logger.info("Removing user {} from tracking list of {}".format(USER(entity), USER(msg.from_user)))
-        user_w.users_tracking = list(filter(lambda user_t: user_t.user_id != entity.id, user_w.users_tracking))
+        user_w.tracking_users = list(filter(lambda user_t: user_t.user_id != entity.id, user_w.tracking_users))
         user_w.save()
         message = 'Sure, deleted <a href="tg://user?id={user_id}">{user_name}</a> from tracking.'.format(
             user_id=entity.id,

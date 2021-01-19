@@ -3,9 +3,7 @@ import time
 
 import telebot
 
-from database import State
 from .message_handlers import *
-from .keyboard_markups import TRACKED_USERS
 from .utils import *
 
 logger = get_logger(__name__)
@@ -113,9 +111,9 @@ def updater():
         # updating users' tracking users statuses
         users = User.select()
         for user_w in users:
-            users_tracking = user_w.users_tracking
+            tracking_users = user_w.tracking_users
 
-            for user_tracking in users_tracking:
+            for user_tracking in tracking_users:
                 cl = ClientMonitor(user_tracking.user_id)
                 status = cl.is_online()
                 user_tracking.online_timeline.append(status)
@@ -129,7 +127,8 @@ def updater():
                     notify_user(bot, user_w)
                     logger.info("User {} was successfully notified.")
                 except ApiTelegramException as e:
-                    logger.warn("Could not notify {}(id:{}) because of the following error: {}.",
-                                user_w.first_name, user_w.user_id, e)
+                    logger.warning("Could not notify {}(id:{}) because of the following error: {}.".format(
+                                   user_w.first_name, user_w.user_id, str(e)))
 
         time.sleep(DEFAULT_TIMEOUT)
+
