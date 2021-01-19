@@ -4,7 +4,7 @@ from peewee import *
 from playhouse.sqlite_ext import JSONField
 
 from database.tracking_user import TrackingUser
-from settings.config import DATABASE_PATH, MINUTE, DATETIME_FORMAT, PROPS
+from settings.config import DATABASE_PATH, DATETIME_FORMAT, PROPS, HOUR
 
 # retrieving a database by default path
 db = SqliteDatabase(DATABASE_PATH)
@@ -63,7 +63,7 @@ class User(Model):
 
     tracking_users = JSONField(json_dumps=TrackingUser.custom_dumps, json_loads=TrackingUser.custom_loads, default=[])
     last_notified = DateTimeField(default=datetime.now().strftime(DATETIME_FORMAT))
-    notification_timeout = IntegerField(default=MINUTE / 10)
+    notification_timeout = IntegerField(default=6*HOUR)
 
     @staticmethod
     def _set_property(tg_user, prop_name, property_value):
@@ -85,6 +85,7 @@ class User(Model):
     """
     Some get/update methods, based on telegram user object
     """
+
     @staticmethod
     def update_state(tg_user, new_state):
         User._set_property(tg_user, "state", new_state)
