@@ -4,7 +4,9 @@ import time
 import telebot
 from telethon.errors import TypeNotFoundError
 
+from database import State
 from .message_handlers import *
+from .keyboard_markups import TRACKED_USERS
 from .utils import *
 
 logger = get_logger(__name__)
@@ -56,7 +58,7 @@ def update_info(q):
 def prompt_update_certain_info(q):
     try:
         tracking_users_markup = TRACKED_USERS(q.from_user)
-    except ValueError as e:
+    except ValueError:
         NO_TRACKING_USERS(bot, q)
         return
 
