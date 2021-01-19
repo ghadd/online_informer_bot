@@ -17,3 +17,7 @@ DATABASE_PATH = os.path.abspath('./database/db.sqlite')
 
 DATETIME_FORMAT = '%Y-%m-%d %H:%M:%S'
 TIME_FORMAT = '%H:%M:%S'
+
+
+def PROPS(cls):
+    return [i for i in cls.__dict__.keys() if i[:1] != '_']

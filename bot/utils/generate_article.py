@@ -1,16 +1,21 @@
 import json
-from datetime import timedelta
 
 from jinja2 import Template
 from quickchart import QuickChart
 from telegraph import Telegraph
 
 from settings import *
-from .time_helpers import *
 from .online_helpers import *
+
+logger = logger.get_logger(__name__)
 
 
 def get_doughnut_chart_url(user_w, user_t, whole_day=False):
+    logger.info("Generating doughnut chart for {}(id:{}) about {}(id:{}), whole_day={}".format(user_w.first_name,
+                                                                                               user_w.user_id,
+                                                                                               user_t.first_name,
+                                                                                               user_t.user_id,
+                                                                                               whole_day))
     chart_config_template = Template(open("./bot/utils/assets/doughnut_chart_config.jinja2").read())
 
     data = [*get_online_offline(user_w, user_t, whole_day)]
@@ -23,6 +28,7 @@ def get_doughnut_chart_url(user_w, user_t, whole_day=False):
 
 
 def get_radar_chart_url(user_t):
+    logger.info("Generating radar chart about {}(id:{})".format(user_t.first_name, user_t.user_id))
     chart_config_template = Template(open("./bot/utils/assets/radar_chart_config.jinja2").read())
 
     start_of_day = get_start_of_day()

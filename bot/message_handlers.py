@@ -12,13 +12,16 @@ def send_menu(bot, msg):
 
 def handle_start(bot, msg):
     if User.get_or_none(User.user_id == msg.from_user.id):
+        logger.info("User {} is a familiar fella.".format(USER(msg.from_user)))
         message = "Hey! How'ya doing?"
     else:
+        logger.info("User {} is a newbie. Adding.".format(USER(msg.from_user)))
         User.insert(
             user_id=msg.from_user.id,
             first_name=msg.from_user.first_name,
             username=msg.from_user.username
         ).execute()
+        logger.info("Added user {} to database.".format(USER(msg.from_user)))
         message = "Hey! Welcome, use bla bla bla?"
 
     bot.send_message(
@@ -26,10 +29,12 @@ def handle_start(bot, msg):
         message,
         reply_markup=menu_markup
     )
+    logger.info("Updating user {} state to NORMAL.".format(USER(msg.from_user)))
     User.update_state(msg.from_user, State.NORMAL)
 
 
 def handle_prompt_user(bot, q, contents, new_state, reply_markup=None):
+    logger.info("Prompting user {} to input (mode {}).".format(USER(q.from_user), State.get_value_naming(new_state)))
     bot.send_message(
         q.from_user.id,
         contents,
@@ -52,25 +57,33 @@ def handle_add_user(bot, msg):
             msg.from_user.id,
             "Sorry, I was not able to find this user."
         )
-        logger.info(e)
+        logger.warn(e)
         return
 
-    user_w = User.get_or_none(User.user_id == msg.from_user.id)
+    user_w = User.get(User.user_id == msg.from_user.id)
     if list(filter(lambda user_t: user_t.user_id == entity.id, user_w.users_tracking)):
+        logger.info("User {} has {} in tracking list already".format(
+            USER(msg.from_user),
+            USER(entity)
+        ))
         bot.send_message(
             msg.from_user.id,
-            'This user is in your tracking list already'
+            'This user is in your tracking list already.'
         )
         return
 
-    if len(user_w.users_tracking) >= 5:
+    if len(user_w.users_tracking) >= 5 and not user_w.premium:
+        logger.info(
+            "User {} without premium membership is attempting to add more than 5 users.".format(USER(msg.from_user)))
         bot.send_message(
             msg.from_user.id,
             'Cannot add more than 5 users in free version.'
         )
         return
 
-    user_w.users_tracking.append(TrackingUser(entity))
+    user_t = TrackingUser(entity)
+    logger.info("Adding user {} to {}' tracking list.".format(USER(entity), USER(msg.from_user)))
+    user_w.users_tracking.append(user_t)
     user_w.save()
 
     bot.send_message(
@@ -82,6 +95,7 @@ def handle_add_user(bot, msg):
         parse_mode='HTML'
     )
 
+    logger.info("Updating user {} state to NORMAL.".format(USER(msg.from_user)))
     User.update_state(msg.from_user, State.NORMAL)
     send_menu(bot, msg)
 
@@ -100,11 +114,13 @@ def handle_del_user(bot, msg):
     user_w = User.get(User.user_id == msg.from_user.id)
 
     if not list(filter(lambda user_t: user_t.user_id == entity.id, user_w.users_tracking)):
+        logger.info("User {} is not in tracking list of {}".format(USER(entity), USER(msg.from_user)))
         message = 'User <a href="tg://user?id={user_id}">{user_name}</a> is not in your tracking list.'.format(
             user_id=entity.id,
             user_name=entity.first_name,
         )
     else:
+        logger.info("Removing user {} from tracking list of {}".format(USER(entity), USER(msg.from_user)))
         user_w.users_tracking = list(filter(lambda user_t: user_t.user_id != entity.id, user_w.users_tracking))
         user_w.save()
         message = 'Sure, deleted <a href="tg://user?id={user_id}">{user_name}</a> from tracking.'.format(
@@ -118,6 +134,7 @@ def handle_del_user(bot, msg):
         parse_mode='HTML'
     )
 
+    logger.info("Updating user {} state to NORMAL.".format(USER(msg.from_user)))
     User.update_state(msg.from_user, State.NORMAL)
     send_menu(bot, msg)
 
@@ -146,6 +163,7 @@ def handle_update_info(bot, q):
     try:
         notify_user(bot, user)
     except ApiTelegramException as e:
+        logger.warn(e)
         bot.send_message(
             q.from_user.id,
             "You have no users tracking yet :("
@@ -206,7 +224,7 @@ def handle_set_timeout(bot, msg):
             f'Setting your timeout to {get_labeled_time(timeout_in_seconds)}.'
         )
         User.update_timeout(msg.from_user, timeout_in_seconds)
-    
+
     send_menu(bot, msg)
     User.update_state(msg.from_user, State.NORMAL)
 

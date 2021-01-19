@@ -1,30 +1,28 @@
-from datetime import timedelta
-
-import requests
 import telethon
 from telebot.apihelper import ApiTelegramException
 
+from bot.inline_markups import *
+from bot.keyboard_markups import *
 from bot.utils.generate_article import generate_article, generate_personalized_article
 from client import ClientMonitor
 from database.user import *
 from settings.logger import *
-from bot.inline_markups import *
-from bot.keyboard_markups import *
 
 logger = get_logger(__name__)
 
 
 def get_track_info(user, certain_record=None):
     if not user.users_tracking:
-        logger.info(f'{user.first_name}({user.user_id}) has no one to track')
+        logger.warn(f'{user.first_name}({user.user_id}) has no one to track')
         return ""
 
-    logger.info(f'Gathering track info for {user.first_name}({user.user_id}).')
-
     if certain_record:
+        logger.info("Creating a personalized article for {}(id:{}) about {}(id:{})".
+                    format(user.first_name, user.user_id, certain_record.first_name, certain_record.user_id))
         article_link = generate_personalized_article(user, certain_record)
         return "Check {}' info out here: {}".format(certain_record.first_name, article_link)
     else:
+        logger.info("Creating a bulk article for {}(id:{})".format(user.first_name, user.user_id))
         article_link = generate_article(user)
         return "Check your query results out here: {}".format(article_link)
 
