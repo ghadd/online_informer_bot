@@ -1,3 +1,13 @@
+"""
+This file corresponds to lower level handlers for user bot-user interaction and mostly
+provides notification and data-collection functionality.
+
+    * get_track_info - return response string for incoming update query
+    * notify_user - sends a generated track info to the destination user and handles possible errors
+    * get_working_entity - processes message text as an TG entity object and returns it if it's type.User
+    * CURRENTLY_UNAVAILABLE - tool for temporary implementation absence notifications
+"""
+
 from datetime import datetime
 from typing import Optional
 
