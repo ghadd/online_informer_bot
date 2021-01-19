@@ -47,7 +47,7 @@ def get_track_info(user: User, certain_record: Optional[TrackingUser] = None) ->
 
     # if no users to tracking - return empty response, which throws a Telegram API Exception later on
     # which leads to sending a corresponding message while handling it
-    if not user.users_tracking:
+    if not user.tracking_users:
         logger.info(f'{user.first_name}({user.user_id}) has no one to track')
         return ""
 

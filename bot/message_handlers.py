@@ -56,21 +56,21 @@ def handle_add_user(bot, msg):
         return
 
     user_w = User.get_or_none(User.user_id == msg.from_user.id)
-    if list(filter(lambda user_t: user_t.user_id == entity.id, user_w.users_tracking)):
+    if list(filter(lambda user_t: user_t.user_id == entity.id, user_w.tracking_users)):
         bot.send_message(
             msg.from_user.id,
             'This user is in your tracking list already'
         )
         return
 
-    if len(user_w.users_tracking) >= 5:
+    if len(user_w.tracking_users) >= 5:
         bot.send_message(
             msg.from_user.id,
             'Cannot add more than 5 users in free version.'
         )
         return
 
-    user_w.users_tracking.append(TrackingUser(entity))
+    user_w.tracking_users.append(TrackingUser(entity))
     user_w.save()
 
     bot.send_message(
@@ -99,13 +99,13 @@ def handle_del_user(bot, msg):
 
     user_w = User.get(User.user_id == msg.from_user.id)
 
-    if not list(filter(lambda user_t: user_t.user_id == entity.id, user_w.users_tracking)):
+    if not list(filter(lambda user_t: user_t.user_id == entity.id, user_w.tracking_users)):
         message = 'User <a href="tg://user?id={user_id}">{user_name}</a> is not in your tracking list.'.format(
             user_id=entity.id,
             user_name=entity.first_name,
         )
     else:
-        user_w.users_tracking = list(filter(lambda user_t: user_t.user_id != entity.id, user_w.users_tracking))
+        user_w.tracking_users = list(filter(lambda user_t: user_t.user_id != entity.id, user_w.tracking_users))
         user_w.save()
         message = 'Sure, deleted <a href="tg://user?id={user_id}">{user_name}</a> from tracking.'.format(
             user_id=entity.id,
@@ -162,7 +162,7 @@ def handle_update_certain_info(bot, msg):
     user = User.get(User.user_id == msg.from_user.id)
     try:
         certain_user = get_working_entity(bot, msg)
-        certain_user = list(filter(lambda user_t: user_t.user_id == certain_user.id, user.users_tracking))
+        certain_user = list(filter(lambda user_t: user_t.user_id == certain_user.id, user.tracking_users))
         if not certain_user:
             bot.send_message(
                 msg.from_user.id,

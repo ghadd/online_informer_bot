@@ -98,7 +98,7 @@ def updater():
             # checking users
             users = User.select()
             for user_w in users:
-                users_tracking = user_w.users_tracking
+                users_tracking = user_w.tracking_users
 
                 for user_tracking in users_tracking:
                     cl = ClientMonitor(user_tracking.user_id)
