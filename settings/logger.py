@@ -1,7 +1,23 @@
+"""
+This file provides a basic logger support
+
+    * get_logger - returns a logger which pipes to /tmp/online_informer_bot.log and console.
+"""
+
 import logging
 
 
-def get_logger(name):
+def get_logger(name: str) -> logging.Logger:
+    """
+    Parameters
+    ----------
+    name : str
+        logger name (usually is __name__)
+
+    Returns
+    -------
+    a basing logger with file and console sinks.
+    """
     logger = logging.Logger(name, level=logging.DEBUG)
 
     file_handler = logging.FileHandler('/tmp/online_informer_bot.log')
