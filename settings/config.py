@@ -4,7 +4,6 @@ DAY = 60 * 60 * 24
 HOUR = 60 * 60
 MINUTE = 60
 
-# consider creating those files
 API_ID = os.environ["TG_API_ID"]
 API_HASH = os.environ["TG_API_HASH"]
 BOT_TOKEN = os.environ["ONLINE_INFORMER_BOT_TOKEN"]
