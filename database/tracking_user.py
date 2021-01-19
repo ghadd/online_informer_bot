@@ -63,6 +63,9 @@ class TrackingUser:
             self.to_dict()
         )
 
+    """
+    Implementing custom serialization assets in order to use in peewee.JsonField
+    """
     @staticmethod
     def custom_dumps(obj):
         return json.dumps([el.to_dict() for el in obj])
