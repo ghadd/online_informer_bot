@@ -1,11 +1,22 @@
-from telebot.types import ReplyKeyboardRemove, ReplyKeyboardMarkup
+from telebot.types import ReplyKeyboardRemove, ReplyKeyboardMarkup, User as TgUser
 
 from database import User
 
 REMOVE = ReplyKeyboardRemove()
 
 
-def TRACKED_USERS(tg_user):
+def TRACKED_USERS(tg_user: TgUser) -> ReplyKeyboardMarkup:
+    """
+    This function created a Reply Keyboard markup with identifiers of all users, tg_user is tracking
+
+    Parameters
+    ----------
+    tg_user : telebot.types.User
+        user, whose tracked users are placed to the keyboard markup
+    Returns
+    -------
+
+    """
     markup = ReplyKeyboardMarkup(row_width=2)
     user_w = User.get(User.user_id == tg_user.id)
 

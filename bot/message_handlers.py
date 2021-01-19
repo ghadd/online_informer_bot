@@ -1,3 +1,4 @@
+from database import State
 from .utils import *
 from .utils.time_helpers import get_in_secs, validate_timeout
 
@@ -128,9 +129,9 @@ def handle_open_settings(bot, q):
                        "Notification timeout: {timeout}\n" \
                        "Premium membership: {premium}" \
         .format(
-            timeout=get_labeled_time(user_w.notification_timeout),
-            premium="true" if user_w.premium else "false"
-        )
+        timeout=get_labeled_time(user_w.notification_timeout),
+        premium="true" if user_w.premium else "false"
+    )
 
     bot.edit_message_text(
         current_settings,
@@ -206,7 +207,7 @@ def handle_set_timeout(bot, msg):
             f'Setting your timeout to {get_labeled_time(timeout_in_seconds)}.'
         )
         User.update_timeout(msg.from_user, timeout_in_seconds)
-    
+
     send_menu(bot, msg)
     User.update_state(msg.from_user, State.NORMAL)
 
