@@ -1,12 +1,10 @@
 import json
-from datetime import timedelta
 
 from jinja2 import Template
 from quickchart import QuickChart
 from telegraph import Telegraph
 
 from settings import *
-from .time_helpers import *
 from .online_helpers import *
 
 
