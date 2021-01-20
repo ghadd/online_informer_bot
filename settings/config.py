@@ -8,6 +8,12 @@ API_ID = os.environ["TG_API_ID"]
 API_HASH = os.environ["TG_API_HASH"]
 BOT_TOKEN = os.environ["ONLINE_INFORMER_BOT_TOKEN"]
 
+DB_NAME = os.environ["DB_NAME"]
+DB_USER = os.environ["DB_USER"]
+DB_PASS = os.environ["DB_PASS"]
+DB_HOST = os.environ["DB_HOST"]
+DB_PORT = os.environ["DB_PORT"]
+
 DEFAULT_TIMEOUT = MINUTE / 10
 DEFAULT_NOTIFY_TIMEOUT = DAY
 MIN_NOTIFICATION_TIMEOUT = HOUR / 2

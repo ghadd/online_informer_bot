@@ -5,15 +5,9 @@ from peewee import *
 from playhouse.mysql_ext import JSONField
 
 from database.tracking_user import TrackingUser
-from settings.config import DATETIME_FORMAT, PROPS, HOUR
+from settings.config import *
 
 # retrieving a database by default path
-DB_NAME = "online_informer_db"
-DB_USER = "root"
-DB_PASS = "fHgw[3D>/62vj~WR"
-DB_HOST = "localhost"
-DB_PORT = 3306
-
 db = MySQLDatabase(DB_NAME, user=DB_USER, password=DB_PASS, host=DB_HOST, port=DB_PORT)
 
 
