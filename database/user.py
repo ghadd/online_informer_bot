@@ -5,7 +5,7 @@ from peewee import *
 from playhouse.mysql_ext import JSONField
 
 from database.tracking_user import TrackingUser
-from settings.config import DATETIME_FORMAT, PROPS, HOUR
+from settings.config import *
 
 # retrieving a database by default path
 DB_NAME = "online_informer_db"
