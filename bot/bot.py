@@ -92,7 +92,7 @@ def set_timeout(msg):
 @bot.callback_query_handler(lambda q: q.data == "go_premium")
 def go_premium(q):
     LOG_HANDLE_CALLBACK_QUERY(logger, q)
-    CURRENTLY_UNAVAILABLE(bot, q)
+    CURRENTLY_UNAVAILABLE(bot, q.from_user.id)
 
 
 @bot.callback_query_handler(lambda q: q.data == "go_back")
