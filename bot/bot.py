@@ -115,7 +115,7 @@ def updater():
         # updating users' tracking users statuses
         users = User.select()
         for user_w in users:
-            tracking_users = user_w.tracking_users
+            tracking_users = user_w.get_tracking_users()
 
             for user_tracking in tracking_users:
                 cl = ClientMonitor(user_tracking.user_id)

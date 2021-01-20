@@ -21,10 +21,10 @@ def TRACKED_USERS(tg_user: TgUser) -> ReplyKeyboardMarkup:
     markup = ReplyKeyboardMarkup(row_width=2)
     user_w = User.get(User.user_id == tg_user.id)
 
-    if not user_w.tracking_users:
+    if not user_w.get_tracking_users():
         raise ValueError("No users tracking for {}".format(USER(tg_user)))
 
-    for user_t in user_w.tracking_users:
+    for user_t in user_w.get_tracking_users():
         markup.add(user_t.username if user_t.username else str(user_t.user_id))
     
     return markup

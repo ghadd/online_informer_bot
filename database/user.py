@@ -1,13 +1,20 @@
 from datetime import datetime
+from typing import List
 
 from peewee import *
-from playhouse.sqlite_ext import JSONField
+from playhouse.mysql_ext import JSONField
 
 from database.tracking_user import TrackingUser
-from settings.config import DATABASE_PATH, DATETIME_FORMAT, PROPS, HOUR
+from settings.config import DATETIME_FORMAT, PROPS, HOUR
 
 # retrieving a database by default path
-db = SqliteDatabase(DATABASE_PATH)
+DB_NAME = "online_informer_db"
+DB_USER = "root"
+DB_PASS = "fHgw[3D>/62vj~WR"
+DB_HOST = "localhost"
+DB_PORT = 3306
+
+db = MySQLDatabase(DB_NAME, user=DB_USER, password=DB_PASS, host=DB_HOST, port=DB_PORT)
 
 
 class State:
@@ -61,9 +68,9 @@ class User(Model):
     state = IntegerField(default=State.NORMAL)
     premium = BooleanField(default=False)
 
-    tracking_users = JSONField(json_dumps=TrackingUser.custom_dumps, json_loads=TrackingUser.custom_loads, default=[])
+    tracking_users = JSONField(default=[])
     last_notified = DateTimeField(default=datetime.now().strftime(DATETIME_FORMAT))
-    notification_timeout = IntegerField(default=6*HOUR)
+    notification_timeout = IntegerField(default=6 * HOUR)
 
     @staticmethod
     def _set_property(tg_user, prop_name, property_value):
@@ -101,6 +108,12 @@ class User(Model):
     @staticmethod
     def get_state(tg_user):
         return User._get_property(tg_user, "state")
+
+    def get_tracking_users(self):
+        return [TrackingUser.from_dict(de_dict) for de_dict in self.tracking_users]
+
+    def set_tracking_users(self, tracking_users: List[TrackingUser]):
+        self.tracking_users = [user_t.to_dict() for user_t in tracking_users]
 
     class Meta:
         database = db

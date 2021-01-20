@@ -31,7 +31,7 @@ def get_doughnut_chart_url(user_w: User, user_t: TrackingUser, whole_day: bool =
     ----------
     user_w : user.User
         User, which properties i.e. notification timeout and user_t online timeline are considered as factors
-        for the chart data. user_t must be a part of user.tracking_users list.
+        for the chart data. user_t must be a part of user.get_tracking_users() list.
     user_t : user.TrackingUser
         Tracking user, whose online timeline list is being monitored and transposed to chart data.
     whole_day : bool
@@ -121,7 +121,7 @@ def generate_article(user_w: User) -> str:
     page_contents = page_template.render(
         user_w=user_w,
         get_image_url=get_doughnut_chart_url,
-        number_of_users_tracking=len(user_w.tracking_users)
+        number_of_users_tracking=len(user_w.get_tracking_users())
     )
     response = telegraph.create_page(
         f'{user_w.first_name}({user_w.user_id}) Tracking list',
