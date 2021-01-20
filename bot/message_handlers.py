@@ -82,7 +82,6 @@ def handle_add_user(bot, msg):
         )
         return
 
-    user_w.tracking_users.append(TrackingUser(entity))
     user_t = TrackingUser(entity)
     logger.info("Adding user {} to {}' tracking list.".format(USER(entity), USER(msg.from_user)))
     user_w.tracking_users.append(user_t)

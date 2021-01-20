@@ -118,7 +118,11 @@ def generate_article(user_w: User) -> str:
 
     telegraph.create_account(short_name='Online Informer')
 
-    page_contents = page_template.render(user_w=user_w, get_image_url=get_doughnut_chart_url)
+    page_contents = page_template.render(
+        user_w=user_w,
+        get_image_url=get_doughnut_chart_url,
+        number_of_users_tracking=len(user_w.tracking_users)
+    )
     response = telegraph.create_page(
         f'{user_w.first_name}({user_w.user_id}) Tracking list',
         html_content=page_contents
