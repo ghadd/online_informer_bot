@@ -1,8 +1,11 @@
 temp
 env
-.idea
+.idea/
 __pycache__
 
 *.session
 *.sqlite
 *.log
+
+*.personal
+.vscode/

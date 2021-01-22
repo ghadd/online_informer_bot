@@ -25,6 +25,7 @@ class ClientMonitor:
     entity_qualifier : Optional[str, int]
         any entity identifier, determining the user entity
     """
+
     def __init__(self, entity_qualifier: Union[str, int]):
         self.entity_qualifier = entity_qualifier
 
@@ -53,7 +54,8 @@ class ClientMonitor:
             try:
                 user = client.get_entity(self.entity_qualifier)
             except ValueError:
-                logger.error(f'User with entity qualifier `{self.entity_qualifier}` cannot be found.')
+                logger.error(
+                    f'User with entity qualifier `{self.entity_qualifier}` cannot be found.')
 
             if user:
                 return isinstance(user.status, UserStatusOnline)
