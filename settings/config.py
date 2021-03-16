@@ -4,21 +4,25 @@ DAY = 60 * 60 * 24
 HOUR = 60 * 60
 MINUTE = 60
 
-# consider creating those files
-API_ID = int(open('./settings/.api_id', 'r').read())
-API_HASH = open('./settings/.api_hash', 'r').read()
-BOT_TOKEN = open('./settings/.bot_token', 'r').read()
+API_ID = os.environ["TG_API_ID"]
+API_HASH = os.environ["TG_API_HASH"]
+BOT_TOKEN = os.environ["ONLINE_INFORMER_BOT_TOKEN"]
 
-DEFAULT_TIMEOUT = MINUTE / 2
+DB_NAME = os.environ["DB_NAME"]
+DB_USER = os.environ["DB_USER"]
+DB_PASS = os.environ["DB_PASS"]
+DB_HOST = os.environ["DB_HOST"]
+DB_PORT = int(os.environ["DB_PORT"])
+
+DEFAULT_TIMEOUT = MINUTE / 10
 DEFAULT_NOTIFY_TIMEOUT = DAY
 MIN_NOTIFICATION_TIMEOUT = HOUR / 2
 
 DATABASE_PATH = os.path.abspath('./database/db.sqlite')
 
-CHART_API_POINT = 'https://quickchart.io/chart?'
-TYPE = 'line'
-FILL = False
-BORDER_COLOR = 'green'
-BG_COLOR = 'white'
+DATETIME_FORMAT = '%Y-%m-%d %H:%M:%S'
+TIME_FORMAT = '%H:%M:%S'
 
-CHART_BLANK = './temp/{}-{}.png'
+
+def PROPS(cls):
+    return [i for i in cls.__dict__.keys() if i[:1] != '_']

@@ -1,0 +1,17 @@
+<h3> {{ user_t.first_name }} <i>(id:{{ user_t.user_id }})</i></h3>
+<h4>
+    {% if online > 0 %}
+        {{ user_t.first_name }} was online for {{ online_time }} in last {{ total_time }}!
+    {% else %}
+        {{ user_t.first_name }} was not online in last {{ total_time }}!
+    {% endif %}
+</h4>
+<h4>
+    When these graphs get fulfilled, you probably need to call this nerd outside ;)
+</h4>
+<p>Online status based on your notification preferences</p>
+<img src="{{ get_doughnut_chart_url(user_w, user_t) }}" alt="Doughnut chart">
+
+<p>Online status from start of the day</p>
+<img src="{{ get_doughnut_chart_url(user_w, user_t, True) }}" alt="Doughnut chart">
+<img src="{{ get_radar_chart_url(user_t) }}" alt="Radar chart">

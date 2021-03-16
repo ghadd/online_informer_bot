@@ -1,3 +1,12 @@
+"""
+This file uses telegram user api (based on telethon) in order to monitor users' online status.
+
+Restrictions
+    * As a real TG account is used as monitor, if user status is ``last seen recently``, henceforth
+    that user denied your access to his/her online status.
+"""
+from typing import Optional, Union
+
 from telethon.sync import TelegramClient
 from telethon.tl.types import UserStatusOnline
 
@@ -7,26 +16,46 @@ from settings.logger import get_logger
 logger = get_logger(__name__)
 
 
-def is_online(username="", user_id=0):
-    with TelegramClient(__file__, API_ID, API_HASH) as client:
-        user = None
+class ClientMonitor:
+    """
+    This class objects are basically telegram user entities, able to check online status of given entities.
 
-        if username:
+    Attributes
+    ----------
+    entity_qualifier : Optional[str, int]
+        any entity identifier, determining the user entity
+    """
+
+    def __init__(self, entity_qualifier: Union[str, int]):
+        self.entity_qualifier = entity_qualifier
+
+    @staticmethod
+    def get_entity(entity_qualifier):
+        with TelegramClient(__file__, API_ID, API_HASH) as client:
+            return client.get_entity(entity_qualifier)
+
+    def is_online(self) -> bool:
+        """
+        Returns
+        -------
+        True is entity at self.entity_qualifier is online and False otherwise
+
+        Raises
+        ------
+        ValueError
+            When entity is not provided or it is invalid User entity
+        """
+        with TelegramClient(__file__, API_ID, API_HASH) as client:
+            user = None
+
+            if not self.entity_qualifier:
+                raise ValueError("No entity qualifier provided.")
+
             try:
-                user = client.get_entity(username)
+                user = client.get_entity(self.entity_qualifier)
             except ValueError:
-                logger.error(f'User with username `{username}` cannot be found.')
-        else:
-            try:
-                user = client.get_entity(user_id)
-            except ValueError:
-                logger.error(f'User with id `{user_id}` cannot be found.')
+                logger.error(
+                    f'User with entity qualifier `{self.entity_qualifier}` cannot be found.')
 
-        if user:
-            return isinstance(user.status, UserStatusOnline)
-
-
-def get_entity(entity_id):
-    with TelegramClient(__file__, API_ID, API_HASH) as client:
-        entity = client.get_entity(entity_id)
-        return entity
+            if user:
+                return isinstance(user.status, UserStatusOnline)
